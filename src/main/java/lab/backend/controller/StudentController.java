@@ -1,24 +1,30 @@
 package lab.backend.controller;
 
 import lab.backend.model.Student;
+import lab.backend.service.StudentService;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/students")
 public class StudentController {
+    private final StudentService service;
 
-    private final List<Student> students = List.of(
-            new Student(1L, "张三", 95.0),
-            new Student(2L, "李四", 78.0));
+    public StudentController(StudentService service) { this.service = service; }
 
-    @GetMapping("/api/students")                       // 查全部
-    public List<Student> list() { return students; }
+    @GetMapping
+    public List<Student> list() { return service.list(); }
 
-    @GetMapping("/api/students/{id}")                  // 按 id 查（{id} 是占位符）
-    public Student get(@PathVariable Long id) {
-        return students.stream()
-                .filter(s -> s.id() .equals( id))
-                .findFirst()
-                .orElseThrow();
-    }
+    @GetMapping("/{id}")
+    public Student get(@PathVariable Long id) { return service.get(id); }
+
+    @PostMapping
+    public Student create(@RequestBody Student s) { return service.save(s); }
+
+    @PutMapping("/{id}")
+    public Student update(@PathVariable Long id, @RequestBody Student s) { return service.update(id, s); }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) { service.delete(id); }
 }
