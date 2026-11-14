@@ -1,5 +1,6 @@
 package lab.backend.config;
 
+import io.jsonwebtoken.Claims;
 import lab.backend.util.JwtUtil;
 import jakarta.servlet.http.*;
 import org.springframework.stereotype.Component;
@@ -22,8 +23,18 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
         try {
-            String username = jwtUtil.verify(auth.substring(7)); // 去掉 "Bearer "
-            req.setAttribute("username", username); // 后面接口要用到
+            Claims claims = jwtUtil.parse(auth.substring(7)); // 去掉 "Bearer "
+            req.setAttribute("username", claims.getSubject()); // 后面接口要用到
+            req.setAttribute("role", claims.get("role", String.class));
+
+            // 角色控制：删除学生只允许 admin
+            if ("DELETE".equalsIgnoreCase(req.getMethod())
+                    && req.getRequestURI().startsWith("/api/students/")
+                    && !"admin".equals(req.getAttribute("role"))) {
+                resp.setStatus(403);
+                resp.getWriter().write("{\"error\":\"无权限，需要管理员\"}");
+                return false;
+            }
             return true;
         } catch (Exception e) {
             resp.setStatus(401); // 证是假的/过期：401

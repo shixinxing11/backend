@@ -22,6 +22,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public Map<String, String> register(@RequestBody User u) {
+        if (u.getPassword() == null || u.getPassword().length() < 8) throw new RuntimeException("密码至少 8 位");
         if (users.findByUsername(u.getUsername()).isPresent()) throw new RuntimeException("用户名已被占用");
         u.setPassword(encoder.encode(u.getPassword()));   // 只存哈希
         u.setRole("member");
@@ -34,7 +35,7 @@ public class AuthController {
         User dbUser = users.findByUsername(u.getUsername())
                 .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
         if (!encoder.matches(u.getPassword(), dbUser.getPassword())) throw new RuntimeException("用户名或密码错误");
-        String token = jwtUtil.generate(dbUser.getId(), dbUser.getUsername());
+        String token = jwtUtil.generate(dbUser.getId(), dbUser.getUsername(), dbUser.getRole());
         return Map.of("token", token, "role", dbUser.getRole());
     }
 }

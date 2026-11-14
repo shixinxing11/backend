@@ -18,18 +18,23 @@ public class JwtUtil {
         this.KEY = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generate(Long userId, String username) {
+    public String generate(Long userId, String username, String role) {
         return Jwts.builder()
                 .subject(username)                 // 你是谁
                 .claim("uid", userId)              // 附加信息
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRE_MS))
                 .signWith(KEY)
                 .compact();
     }
 
-    public String verify(String token) {          // 验签；不通过会抛异常
+    public Claims parse(String token) {           // 验签；不通过会抛异常
         return Jwts.parser().verifyWith(KEY).build()
-                .parseSignedClaims(token).getPayload().getSubject();
+                .parseSignedClaims(token).getPayload();
+    }
+
+    public String verify(String token) {
+        return parse(token).getSubject();
     }
 }
